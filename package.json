@@ -1,0 +1,51 @@
+{
+  "name": "@apiratorjs/with-backoff",
+  "version": "1.0.0",
+  "description": "A lightweight zero-dependency library for retrying operations with backoff for JavaScript and TypeScript.",
+  "author": {
+    "name": "Oleksii Zaitsev",
+    "url": "https://oleksiizaitsev.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apiratorjs/with-backoff.git"
+  },
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist/src",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "backoff",
+    "retry",
+    "exponential",
+    "linear",
+    "jitter",
+    "strategy",
+    "decorator",
+    "network backoff",
+    "internal server error backoff",
+    "connection error message backoff"
+  ],
+  "type": "commonjs",
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "watch": "tsc --watch",
+    "test": "npm run build && node --test dist/test",
+    "prepublishOnly": "npm test"
+  },
+  "engines": {
+    "node": ">=16.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {}
+}
