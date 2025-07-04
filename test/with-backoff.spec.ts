@@ -1,6 +1,7 @@
 import assert from "assert";
 import { describe, it } from "node:test";
 import { withBackoff } from "../src";
+import { AbortError } from "../src/errors";
 
 // Helper function to create a failing operation that succeeds after N attempts
 function createFailingOperation(successOnAttempt: number) {
@@ -44,17 +45,22 @@ describe("withBackoff", () => {
 
   it("should throw if max attempts are exceeded", async () => {
     const operation = createFailingOperation(4);
+    const retryAttempts: number[] = [];
 
     await assert.rejects(
       async () => {
         await withBackoff(operation, {
           maxAttempts: 3,
           delayMs: 1,
-          isRetryable: () => true
+          isRetryable: () => true,
+          onRetry: async ({ attempt }) => {
+            retryAttempts.push(attempt);
+          }
         });
       },
       (error: Error) => {
         assert.strictEqual(error.message, "Attempt 3 failed");
+        assert.deepStrictEqual(retryAttempts, [1, 2]); // Verify exactly 2 retries were attempted
         return true;
       }
     );
@@ -134,7 +140,6 @@ describe("withBackoff", () => {
       }
     });
 
-    // Delay should be relative to baseTime
     assert.strictEqual(delays[0], baseTime.getTime() + 1000);
   });
 
@@ -142,5 +147,99 @@ describe("withBackoff", () => {
     const operation = async () => "success";
     const result = await withBackoff(operation);
     assert.strictEqual(result, "success");
+  });
+
+  it("should handle abort with Error reason", async () => {
+    const operation = createFailingOperation(3);
+    const controller = new AbortController();
+    const abortError = new Error("Some abort error");
+
+    setTimeout(() => {
+      controller.abort(abortError);
+    }, 10);
+
+    await assert.rejects(
+      async () => {
+        await withBackoff(operation, {
+          maxAttempts: 3,
+          delayMs: 100,
+          signal: controller.signal,
+          isRetryable: () => true
+        });
+      },
+      (error: AbortError) => {
+        assert.strictEqual(error.name, "AbortError");
+        assert.strictEqual(error.message, "Backoff aborted");
+        assert.strictEqual(error.cause, abortError);
+        return true;
+      }
+    );
+  });
+
+  it("should handle abort with custom reason", async () => {
+    const operation = createFailingOperation(3);
+    const controller = new AbortController();
+    const customReason = { message: "Custom abort reason", code: "CUSTOM_ABORT" };
+
+    // Abort after a small delay
+    setTimeout(() => {
+      controller.abort(customReason);
+    }, 10);
+
+    await assert.rejects(
+      async () => {
+        await withBackoff(operation, {
+          maxAttempts: 3,
+          delayMs: 100,
+          signal: controller.signal,
+          isRetryable: () => true
+        });
+      },
+      (error: AbortError) => {
+        assert.strictEqual(error.name, "AbortError");
+        assert.strictEqual(error.message, "Backoff aborted");
+        assert.strictEqual(error.cause, customReason);
+        return true;
+      }
+    );
+  });
+
+  it("should abort during long-running operation execution", async () => {
+    const controller = new AbortController();
+    let operationStarted = false;
+
+    // Create an operation that takes some time to complete
+    const operation = async () => {
+      operationStarted = true;
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Long operation
+      return "success";
+    };
+
+    // Abort after we ensure operation has started
+    setTimeout(async () => {
+      // Wait until operation has started
+      while (!operationStarted) {
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+      controller.abort("Operation cancelled");
+    }, 0);
+
+    await assert.rejects(
+      async () => {
+        await withBackoff(operation, {
+          maxAttempts: 3,
+          delayMs: 100,
+          signal: controller.signal,
+          isRetryable: () => true
+        });
+      },
+      (error: AbortError) => {
+        assert.strictEqual(error.name, "AbortError");
+        assert.strictEqual(error.message, "Backoff aborted");
+        assert.strictEqual(error.cause, "Operation cancelled");
+        assert.strictEqual(operationStarted, true); // Verify operation was actually started
+        return true;
+      }
+    );
   });
 });

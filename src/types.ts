@@ -58,6 +58,12 @@ export type TBackoffOptions = {
    * @default () => false
    */
   isRetryable?: TBackoffIsRetryable;
+
+  /**
+   * Signal to cancel the backoff.
+   * @default null
+   */
+  signal?: AbortSignal | null;
 };
 
 /**

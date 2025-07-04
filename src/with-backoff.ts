@@ -1,4 +1,5 @@
 import { createDelayList } from "./create-delay-list";
+import { AbortError } from "./errors";
 import { TBackoffOptions, TError, TRetryOptions } from "./types";
 import { wait } from "./utils";
 
@@ -11,6 +12,7 @@ const DEFAULT_OPTIONS: Required<TBackoffOptions> = {
   relativeTo: null,
   onRetry: async (retryOptions: TRetryOptions) => {},
   isRetryable: (error: TError) => false,
+  signal: null
 };
 
 export async function withBackoff<T>(
@@ -19,19 +21,31 @@ export async function withBackoff<T>(
 ): Promise<T> {
   const mergedOptions: Required<TBackoffOptions> = {
     ...DEFAULT_OPTIONS,
-    ...options,
+    ...options
   };
 
-  const { maxAttempts, onRetry, isRetryable } = mergedOptions;
+  const { maxAttempts, onRetry, isRetryable, signal } = mergedOptions;
 
   const delays = createDelayList(mergedOptions);
   let attempt = 1;
 
-  while (attempt <= maxAttempts) {
+  const abortPromise = new Promise<never>((_, reject) => {
+    if (signal?.aborted) {
+      reject(new AbortError("Backoff aborted", signal.reason));
+    }
+    signal?.addEventListener("abort", () => {
+      reject(new AbortError("Backoff aborted", signal.reason));
+    });
+  });
+
+  while (attempt <= maxAttempts && !signal?.aborted) {
     try {
-      return await operation();
+      return await Promise.race([operation(), abortPromise]);
     } catch (error) {
-      // If this was the last attempt, throw the error
+      if (error instanceof AbortError) {
+        throw error;
+      }
+
       if (attempt === maxAttempts) {
         throw error;
       }
@@ -45,15 +59,18 @@ export async function withBackoff<T>(
       await onRetry({
         attempt,
         delay: currentDelayMs,
-        error: error as TError,
+        error: error as TError
       });
 
-      await wait(currentDelayMs);
+      await Promise.race([wait(currentDelayMs), abortPromise]);
+
       attempt++;
     }
   }
 
-  // This should never be reached due to the return in try block
-  // or throw in catch block, but TypeScript needs it
+  if (signal?.aborted) {
+    throw new AbortError("Backoff aborted", signal.reason);
+  }
+
   throw new Error("Max attempts exceeded");
 }

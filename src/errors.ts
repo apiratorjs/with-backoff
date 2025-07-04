@@ -44,3 +44,13 @@ export function isConnectionErrorMessage(err: TError): boolean {
     ).join("|")
   ).test(errorMessage);
 }
+
+export class AbortError extends Error {
+  public cause?: Error;
+
+  constructor(reason: any, cause?: Error) {
+    super(String(reason));
+    this.cause = cause;
+    this.name = "AbortError";
+  }
+}
