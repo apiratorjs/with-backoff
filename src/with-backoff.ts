@@ -9,10 +9,9 @@ const DEFAULT_OPTIONS: Required<TBackoffOptions> = {
   delayFactor: 4,
   jitter: 0,
   strategy: "exponential",
-  relativeTo: null,
   onRetry: async (retryOptions: TRetryOptions) => {},
   isRetryable: (error: TError) => false,
-  signal: null
+  signal: null,
 };
 
 export async function withBackoff<T>(
@@ -21,7 +20,7 @@ export async function withBackoff<T>(
 ): Promise<T> {
   const mergedOptions: Required<TBackoffOptions> = {
     ...DEFAULT_OPTIONS,
-    ...options
+    ...options,
   };
 
   const { maxAttempts, onRetry, isRetryable, signal } = mergedOptions;
@@ -59,7 +58,7 @@ export async function withBackoff<T>(
       await onRetry({
         attempt,
         delay: currentDelayMs,
-        error: error as TError
+        error: error as TError,
       });
 
       await Promise.race([wait(currentDelayMs), abortPromise]);

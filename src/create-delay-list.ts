@@ -1,7 +1,7 @@
 import { TBackoffDelayListOptions } from "./types";
 
 export function createDelayList(options: TBackoffDelayListOptions): number[] {
-  let { maxAttempts, delayMs, delayFactor, jitter, strategy, relativeTo } = options;
+  let { maxAttempts, delayMs, delayFactor, jitter, strategy } = options;
 
   let delaysMs: number[] = [];
 
@@ -17,11 +17,6 @@ export function createDelayList(options: TBackoffDelayListOptions): number[] {
       const baseDelay = delayMs!;
       return baseDelay + (baseDelay * (jitter! || 0) * Math.random());
     });
-  }
-
-  if (relativeTo && relativeTo instanceof Date) {
-    const time = relativeTo.getTime();
-    return delaysMs.map((delay) => time + delay);
   }
 
   return delaysMs;

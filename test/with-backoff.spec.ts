@@ -123,26 +123,6 @@ describe("withBackoff", () => {
     assert.strictEqual(delays[1], 10);
   });
 
-  it("should respect relativeTo option", async () => {
-    const delays: number[] = [];
-    const operation = createFailingOperation(2);
-    const baseTime = new Date("2024-01-01T00:00:00Z");
-
-    await withBackoff(operation, {
-      maxAttempts: 2,
-      delayMs: 1000,
-      strategy: "linear",
-      jitter: 0,
-      relativeTo: baseTime,
-      isRetryable: () => true,
-      onRetry: async ({ delay }) => {
-        delays.push(delay);
-      }
-    });
-
-    assert.strictEqual(delays[0], baseTime.getTime() + 1000);
-  });
-
   it("should use default options if none provided", async () => {
     const operation = async () => "success";
     const result = await withBackoff(operation);

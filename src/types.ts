@@ -39,13 +39,6 @@ export type TBackoffOptions = {
   strategy?: TBackoffStrategy;
 
   /**
-   * Reference time for calculating relative delays.
-   * If null, current time is used.
-   * @default null
-   */
-  relativeTo?: TBackoffRelativeTo;
-
-  /**
    * Callback function called before each retry attempt.
    * Can be used for logging or custom delay handling.
    * @default async () => {}
