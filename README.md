@@ -24,7 +24,6 @@ A lightweight zero-dependency library for retrying operations with backoff for J
   - Customizable retry attempts and delays
   - Jitter support to prevent thundering herd
   - Custom retry condition functions
-  - Relative time support for delay calculations
   - AbortController support for cancellation
 
 - **TypeScript Support:**
@@ -256,7 +255,6 @@ type TBackoffOptions = {
   delayFactor?: number;      // Default: 4
   jitter?: number;           // Default: 0
   strategy?: 'exponential' | 'linear';  // Default: 'exponential'
-  relativeTo?: Date | null;  // Default: null
   onRetry?: (options: TRetryOptions) => Promise<void> | void;
   isRetryable?: (error: TError) => Promise<boolean> | boolean;
   signal?: AbortSignal | null;  // Default: null, AbortController signal for cancellation
