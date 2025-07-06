@@ -1,6 +1,6 @@
 {
   "name": "@apiratorjs/with-backoff",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "A lightweight zero-dependency library for retrying operations with backoff for JavaScript and TypeScript.",
   "author": {
     "name": "Oleksii Zaitsev",
