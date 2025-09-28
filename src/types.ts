@@ -109,5 +109,5 @@ export type TError = Error & {
   /** Nested error cause with optional code */
   cause?: { code?: string };
   /** HTTP response with optional status code */
-  response?: { statusCode?: number };
+  response?: { statusCode?: number, status?: number };
 };

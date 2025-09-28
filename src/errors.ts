@@ -32,7 +32,7 @@ export function isNetworkError(err: TError) {
 }
 
 export function isInternalServerError(err: TError) {
-  const statusCode = err.statusCode || err?.response?.statusCode;
+  const statusCode = err.statusCode || err?.response?.statusCode ||err?.response?.status;
   return Boolean(statusCode && statusCode >= 500);
 }
 
