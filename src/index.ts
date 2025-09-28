@@ -5,3 +5,4 @@ export * from "./with-internal-server-error-backoff";
 export * from "./with-connection-error-message-backoff";
 export * from "./create-delay-list";
 export * from "./decorators";
+export * from "./errors";
